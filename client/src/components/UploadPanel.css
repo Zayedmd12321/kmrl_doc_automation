@@ -1,0 +1,135 @@
+/* Main container for the entire panel */
+.upload-panel {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  background-color: #ffffff;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  max-width: 450px;
+  margin: auto;
+  position: relative;
+  text-align: center;
+}
+
+/* Close button in the top-right corner */
+.close-button {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #718096; /* gray-500 */
+}
+.close-button:hover {
+  color: #2d3748; /* gray-700 */
+}
+
+/* Header section with "UPLOAD FILES" text */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+.header-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #4a5568; /* gray-700 */
+  margin: 0 16px;
+  letter-spacing: 0.05em;
+}
+.divider {
+  flex-grow: 1;
+  border: none;
+  border-top: 1px solid #f6ad55; /* orange-300 */
+}
+
+/* The main drag and drop area */
+.dropzone {
+  border: 2px dashed #cbd5e0; /* gray-300 */
+  border-radius: 8px;
+  padding: 32px;
+  background-color: #f7fafc; /* gray-50 */
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  margin-bottom: 24px;
+}
+.dropzone.active {
+  border-color: #4299e1; /* blue-400 */
+  background-color: #ebf8ff; /* blue-50 */
+}
+.dropzone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.upload-icon {
+  color: #ed8936; /* orange-400 */
+}
+.dropzone-text-bold {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #2d3748; /* gray-800 */
+}
+.dropzone-text-normal {
+  font-size: 0.875rem;
+  color: #4a5568; /* gray-700 */
+}
+.dropzone-text-small {
+  font-size: 0.75rem;
+  color: #a0aec0; /* gray-500 */
+  margin-top: 4px;
+}
+
+/* Container for the row of file type icons */
+.file-icons-container {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+.file-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.icon-background {
+  padding: 12px;
+  border-radius: 8px;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.icon-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #4a5568; /* gray-600 */
+}
+
+/* Container for the save button */
+.save-button-container {
+  text-align: center;
+}
+.save-button {
+  background-color: #3182ce; /* blue-600 */
+  color: white;
+  font-weight: 700;
+  font-size: 1rem;
+  border: none;
+  border-radius: 9999px; /* pill shape */
+  padding: 12px 24px;
+  width: 50%;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.save-button:hover {
+  background-color: #2b6cb0; /* blue-700 */
+}
+.save-button:disabled {
+  background-color: #a0aec0; /* gray-400 */
+  cursor: not-allowed;
+}
