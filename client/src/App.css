@@ -1,4 +1,8 @@
 /* --- Global Styles & Main Container --- */
+
+html {
+  scroll-behavior: smooth;
+}
 .app-container {
   background-color: #F8F9FA;
   min-height: 100vh;

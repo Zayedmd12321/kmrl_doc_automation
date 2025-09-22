@@ -6,7 +6,7 @@ const Tesseract = require("tesseract.js");
 const fs = require("fs");
 
 const { GoogleGenAI } = require("@google/genai");
-const ai = new GoogleGenAI({ apiKey: "AIzaSyBUixmZmH9N-bV4x0oYMF-LM80gO-SB12o" });
+const ai = new GoogleGenAI({ apiKey: "AIzaSyAJSWLHCVmLVam_3EsV-1MgfxEbpaOai_A" });
 
 
 const app = express();
@@ -58,7 +58,7 @@ app.post("/summarize", async (req, res) => {
 
     // Step 1: Ask Gemini to classify relevant departments
     const classifyResponse = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-pro",
       contents: `
 You are an assistant for Kochi Metro Rail Limited (KMRL).
 Given this document, identify which department(s) it is most relevant to.
