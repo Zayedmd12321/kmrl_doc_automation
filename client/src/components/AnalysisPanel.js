@@ -3,16 +3,16 @@ import { FiAlertTriangle, FiCheckSquare, FiCalendar } from 'react-icons/fi';
 import { GoChevronDown } from 'react-icons/go';
 import ReactMarkdown from 'react-markdown';
 
-// Import the dedicated CSS file for this component
-import './AnalysisPanel.css';
+// Import CSS module
+import styles from './AnalysisPanel.module.css';
 
 // A minimalist component for displaying key insights
 const InsightItem = ({ icon: Icon, title, children }) => (
-  <div className="insight-item">
-    <Icon className="insight-icon" />
-    <div className="insight-text">
-      <p className="insight-title">{title}</p>
-      <div className="insight-value">{children}</div>
+  <div className={styles['insight-item']}>
+    <Icon className={styles['insight-icon']} />
+    <div className={styles['insight-text']}>
+      <p className={styles['insight-title']}>{title}</p>
+      <div className={styles['insight-value']}>{children}</div>
     </div>
   </div>
 );
@@ -26,15 +26,26 @@ const Accordion = ({ items }) => {
   };
 
   return (
-    <div className="accordion">
+    <div className={styles.accordion}>
       {Object.entries(items).map(([title, content], index) => (
-        <div className="accordion-item" key={title}>
-          <button className="accordion-header" onClick={() => handleClick(index)}>
+        <div className={styles['accordion-item']} key={title}>
+          <button
+            className={styles['accordion-header']}
+            onClick={() => handleClick(index)}
+          >
             <span>Summary for {title}</span>
-            <GoChevronDown className={`accordion-chevron ${activeIndex === index ? 'open' : ''}`} />
+            <GoChevronDown
+              className={`${styles['accordion-chevron']} ${
+                activeIndex === index ? styles.open : ''
+              }`}
+            />
           </button>
-          <div className={`accordion-content ${activeIndex === index ? 'open' : ''}`}>
-            <div className="accordion-content-inner">
+          <div
+            className={`${styles['accordion-content']} ${
+              activeIndex === index ? styles.open : ''
+            }`}
+          >
+            <div className={styles['accordion-content-inner']}>
               <ReactMarkdown>{content}</ReactMarkdown>
             </div>
           </div>
@@ -44,7 +55,6 @@ const Accordion = ({ items }) => {
   );
 };
 
-
 function AnalysisPanel({ result, fullText }) {
   const [activeTab, setActiveTab] = useState('overview');
   const { departments = [], summaries = {}, insights = {} } = result || {};
@@ -53,13 +63,19 @@ function AnalysisPanel({ result, fullText }) {
     switch (activeTab) {
       case 'departments':
         return (
-          <div className="tab-content">
-            <h3 className="section-heading">Relevant Departments</h3>
-            <div className="tags-container">
+          <div className={styles['tab-content']}>
+            <h3 className={styles['section-heading']}>Relevant Departments</h3>
+            <div className={styles['tags-container']}>
               {departments.length > 0 ? (
-                departments.map(dept => <span key={dept} className="tag teal">{dept}</span>)
+                departments.map((dept) => (
+                  <span key={dept} className={`${styles.tag} ${styles.teal}`}>
+                    {dept}
+                  </span>
+                ))
               ) : (
-                <p className="placeholder-text-small">No specific departments identified.</p>
+                <p className={styles['placeholder-text-small']}>
+                  No specific departments identified.
+                </p>
               )}
             </div>
             {Object.keys(summaries).length > 0 && <Accordion items={summaries} />}
@@ -67,31 +83,43 @@ function AnalysisPanel({ result, fullText }) {
         );
       case 'fullText':
         return (
-          <div className="tab-content">
-            <pre className="full-text-box">
-              {fullText || "No text available."}
+          <div className={styles['tab-content']}>
+            <pre className={styles['full-text-box']}>
+              {fullText || 'No text available.'}
             </pre>
           </div>
         );
       case 'overview':
       default:
         return (
-          <div className="tab-content">
-            <h3 className="section-heading">General Summary</h3>
-            <p className="summary-text">{insights.general_summary || "No summary available."}</p>
+          <div className={styles['tab-content']}>
+            <h3 className={styles['section-heading']}>General Summary</h3>
+            <p className={styles['summary-text']}>
+              {insights.general_summary || 'No summary available.'}
+            </p>
 
-            <h3 className="section-heading">Key Insights</h3>
-            <div className="insights-container">
+            <h3 className={styles['section-heading']}>Key Insights</h3>
+            <div className={styles['insights-container']}>
               <InsightItem icon={FiAlertTriangle} title="Urgency">
-                <span className={`tag ${insights.urgency?.startsWith('High') ? 'red' : 'green'}`}>
+                <span
+                  className={`${styles.tag} ${
+                    insights.urgency?.startsWith('High')
+                      ? styles.red
+                      : styles.green
+                  }`}
+                >
                   {insights.urgency || 'N/A'}
                 </span>
               </InsightItem>
               <InsightItem icon={FiCheckSquare} title="Action Items">
-                {insights.action_items?.length ? insights.action_items.join('; ') : 'None identified.'}
+                {insights.action_items?.length
+                  ? insights.action_items.join('; ')
+                  : 'None identified.'}
               </InsightItem>
               <InsightItem icon={FiCalendar} title="Key Dates">
-                {insights.key_dates?.length ? insights.key_dates.join(', ') : 'None identified.'}
+                {insights.key_dates?.length
+                  ? insights.key_dates.join(', ')
+                  : 'None identified.'}
               </InsightItem>
             </div>
           </div>
@@ -100,15 +128,30 @@ function AnalysisPanel({ result, fullText }) {
   };
 
   return (
-    <div className="analysis-panel">
-      <div className="tab-list">
-        <button className={`tab ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}>
+    <div className={styles['analysis-panel']}>
+      <div className={styles['tab-list']}>
+        <button
+          className={`${styles.tab} ${
+            activeTab === 'overview' ? styles.active : ''
+          }`}
+          onClick={() => setActiveTab('overview')}
+        >
           Overview
         </button>
-        <button className={`tab ${activeTab === 'departments' ? 'active' : ''}`} onClick={() => setActiveTab('departments')}>
+        <button
+          className={`${styles.tab} ${
+            activeTab === 'departments' ? styles.active : ''
+          }`}
+          onClick={() => setActiveTab('departments')}
+        >
           Department Summaries
         </button>
-        <button className={`tab ${activeTab === 'fullText' ? 'active' : ''}`} onClick={() => setActiveTab('fullText')}>
+        <button
+          className={`${styles.tab} ${
+            activeTab === 'fullText' ? styles.active : ''
+          }`}
+          onClick={() => setActiveTab('fullText')}
+        >
           Full Text
         </button>
       </div>

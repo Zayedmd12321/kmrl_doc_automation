@@ -1,0 +1,155 @@
+/* Note: Assumes variables from previous responses are available globally */
+
+/* === TIMELINE CONTAINER === */
+.timeline-container {
+  position: relative;
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 1rem 0;
+}
+
+.timeline-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 18px; /* Center of the 40px wide node area */
+  height: 100%;
+  width: 4px;
+  background: var(--border-color);
+  border-radius: 2px;
+}
+
+/* === TIMELINE ITEM & NODE === */
+.timeline-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 40px 1fr; /* Column for node, column for content */
+  align-items: start;
+  margin-bottom: 2rem;
+}
+
+.timeline-node {
+  position: absolute;
+  top: 4px;
+  left: 8px; /* (40px/2) - (24px/2) = 8px */
+  height: 24px;
+  width: 24px;
+  background: white;
+  border: 4px solid var(--primary-color);
+  border-radius: 50%;
+  z-index: 1;
+}
+
+/* Urgency Colors for Nodes */
+.timeline-node--normal { border-color: var(--primary-color); }
+.timeline-node--soon { border-color: #D69E2E; } /* Yellow */
+.timeline-node--urgent { border-color: #C53030; } /* Red */
+
+/* "Today" Marker Style */
+.timeline-item--today {
+  margin: -1rem 0 2rem 0; /* Adjust spacing */
+}
+.timeline-item--today .timeline-node {
+  border-color: var(--primary-color);
+  background-color: var(--primary-color);
+  box-shadow: 0 0 0 4px white;
+}
+.timeline-item--today .timeline-date {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  grid-column: 2;
+  margin-top: 2px;
+}
+.timeline-item--today .timeline-date span {
+  font-weight: 400;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* === TIMELINE CONTENT === */
+.timeline-date {
+  grid-column: 2; /* Place in the second column */
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 0.25rem 0;
+  margin-bottom: 0.75rem;
+}
+
+.timeline-cards-container {
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.deadline-card {
+  background-color: var(--bg-card);
+  padding: 1.25rem;
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.deadline-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.deadline-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.deadline-filename { margin: 0; }
+.deadline-filename a {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+.deadline-filename a:hover { color: var(--primary-color); }
+
+.deadline-event {
+  margin: 0 0 1.25rem 0;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.deadline-card-footer {
+  border-top: 1px solid var(--border-color);
+  padding-top: 1rem;
+}
+
+/* Small File Icon */
+.file-icon-small {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  color: white;
+  text-transform: uppercase;
+}
+.file-icon--pdf { background-color: #e53e3e; }
+.file-icon--docx { background-color: #4285f4; }
+.file-icon--xlsx { background-color: #34a853; }
+.file-icon--default { background-color: #a0aec0; }
+
+/* Reusing tag styles */
+.tag-container { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.tag.tag-department { background-color: #E6FFFA; color: #2C7A7B; font-size: 0.75rem; padding: 0.25rem 0.75rem; border-radius: 12px; font-weight: 600; }
+
+.no-deadlines {
+  background-color: var(--bg-card);
+  text-align: center;
+  padding: 3rem;
+  border-radius: 8px;
+  box-shadow: var(--shadow-sm);
+  color: var(--text-secondary);
+}

@@ -3,11 +3,11 @@ import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { saveAs } from 'file-saver';
 import { FiDownload } from 'react-icons/fi';
 
-// Import the new CSS file for this component
-import './ActionsPanel.css';
+// Import the CSS module instead of normal CSS
+import styles from './ActionsPanel.module.css';
 
 function ActionsPanel({ result, fullText }) {
-  // This function for creating and downloading DOCX files is unchanged.
+  // Function for creating and downloading DOCX files
   const handleDownload = (content, filename = "document.docx") => {
     const doc = new Document({
       sections: [
@@ -21,26 +21,27 @@ function ActionsPanel({ result, fullText }) {
   };
 
   return (
-    <div className="actions-panel">
-      <h3 className="actions-header">Actions</h3>
-      <div className="actions-list">
+    <div className={styles['actions-panel']}>
+      <h3 className={styles['actions-header']}>Actions</h3>
+      <div className={styles['actions-list']}>
         <button
-          className="action-button primary"
+          className={`${styles['action-button']} ${styles.primary}`}
           onClick={() => handleDownload(fullText, "extracted-text.docx")}
         >
-          <FiDownload className="button-icon" />
+          <FiDownload className={styles['button-icon']} />
           <span>Download Full Text</span>
         </button>
-        {result?.summaries && Object.entries(result.summaries).map(([dept, summary]) => (
-          <button
-            key={dept}
-            className="action-button outline"
-            onClick={() => handleDownload(summary, `${dept}-summary.docx`)}
-          >
-            <FiDownload className="button-icon" />
-            <span>Download {dept} Summary</span>
-          </button>
-        ))}
+        {result?.summaries &&
+          Object.entries(result.summaries).map(([dept, summary]) => (
+            <button
+              key={dept}
+              className={`${styles['action-button']} ${styles.outline}`}
+              onClick={() => handleDownload(summary, `${dept}-summary.docx`)}
+            >
+              <FiDownload className={styles['button-icon']} />
+              <span>Download {dept} Summary</span>
+            </button>
+          ))}
       </div>
     </div>
   );

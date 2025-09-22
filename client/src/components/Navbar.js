@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FaBars, FaTimes } from 'react-icons/fa';
 import logo from '../assets/KMRL-logo-300x165.png'; // Make sure the path is correct
 import './Navbar.css'; // We will update this file
+import { NavLink } from "react-router-dom";
 
 function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -27,26 +28,30 @@ function Navbar() {
           {/* Main navigation links are wrapped for better spacing */}
           <div className="main-nav-links">
             <li className="nav-item">
-              <a href="/departments" className="nav-link">
+              <NavLink to="/" className="nav-link">
+                Analyse
+              </NavLink>
+            </li>
+            <li className="nav-item">
+              <NavLink to="/departments" className="nav-link">
                 Browse by Department
-              </a>
+              </NavLink>
             </li>
             <li className="nav-item">
-              <a href="/priority" className="nav-link">
+              <NavLink to="/priority" className="nav-link">
                 Priority Queue
-              </a>
+              </NavLink>
             </li>
             <li className="nav-item">
-              <a href="/deadlines" className="nav-link">
+              <NavLink to="/deadlines" className="nav-link">
                 Upcoming Deadlines
-              </a>
+              </NavLink>
             </li>
           </div>
-          {/* Sign In button is separate for distinct styling */}
-          <li className="nav-item-button">
-            <a href="/login" className="nav-link-button">
-              Sign In
-            </a>
+          <li className="nav-item">
+            <NavLink to={"/login"} className="nav-link-button">
+              Log Out
+            </NavLink>
           </li>
         </ul>
       </div>

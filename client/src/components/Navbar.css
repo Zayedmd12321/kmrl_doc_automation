@@ -1,6 +1,7 @@
 /* Using CSS variables for easy theme management */
 :root {
-  --primary-color: #00a99d; /* Teal from logo */
+  --primary-color: #00a99d;
+  /* Teal from logo */
   --dark-grey: #333;
   --light-grey: #555;
   --font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
@@ -28,8 +29,10 @@
   align-items: center;
   height: 100%;
   width: 100%;
-  max-width: 1400px; /* Increased max-width for a wider look */
-  padding: 0 40px; /* Increased padding */
+  max-width: 1400px;
+  /* Increased max-width for a wider look */
+  padding: 0 40px;
+  /* Increased padding */
 }
 
 .navbar-brand {
@@ -39,30 +42,35 @@
 }
 
 .navbar-logo {
-  height: 45px; /* Slightly larger logo */
+  height: 45px;
+  /* Slightly larger logo */
   margin-right: 15px;
 }
 
 .brand-name {
   color: var(--primary-color);
   font-size: 1.6rem;
-  font-weight: 600; /* Bolder brand name */
+  font-weight: 600;
+  /* Bolder brand name */
 }
 
 .nav-menu {
   display: flex;
   align-items: center;
   list-style: none;
-  gap: 2rem; /* Add space between link groups */
+  gap: 2rem;
+  /* Add space between link groups */
 }
 
 .main-nav-links {
   display: flex;
   align-items: center;
-  gap: 2.5rem; /* Space between the main text links */
+  gap: 2.5rem;
+  /* Space between the main text links */
 }
 
-.nav-item, .nav-item-button {
+.nav-item,
+.nav-item-button {
   height: 85px;
   display: flex;
   align-items: center;
@@ -77,7 +85,8 @@
 }
 
 .nav-link:hover {
-  color: var(--primary-color); /* Cleaner hover effect */
+  color: var(--primary-color);
+  /* Cleaner hover effect */
 }
 
 .nav-link-button {
@@ -92,7 +101,8 @@
 }
 
 .nav-link-button:hover {
-  background-color: #008177; /* Darker shade on hover */
+  background-color: #008177;
+  /* Darker shade on hover */
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 169, 157, 0.3);
 }
@@ -101,14 +111,22 @@
   display: none;
 }
 
+.nav-link.active {
+  color: var(--primary-color);
+  font-weight: 600;
+  border-bottom: 2px solid var(--primary-color);
+}
+
 /* --- Mobile Responsiveness --- */
 @media screen and (max-width: 960px) {
   .navbar-container {
     padding: 0 20px;
   }
-  
-  .main-nav-links, .nav-item-button {
-    display: none; /* Hide all links on mobile by default */
+
+  .main-nav-links,
+  .nav-item-button {
+    display: none;
+    /* Hide all links on mobile by default */
   }
 
   .nav-menu.active {
@@ -125,25 +143,28 @@
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   }
 
+
+
   .nav-menu.active .main-nav-links {
     display: flex;
     flex-direction: column;
     width: 100%;
     gap: 0;
   }
-  
+
   .nav-menu.active .nav-item,
   .nav-menu.active .nav-item-button {
-      display: block;
-      width: 100%;
-      text-align: center;
-      padding: 1rem 0;
-      height: auto;
+    display: block;
+    color: #00a99d;
+    width: 100%;
+    text-align: center;
+    padding: 1rem 0;
+    height: auto;
   }
-  
+
   .nav-menu.active .nav-link-button {
-      display: inline-block;
-      width: 80%;
+    display: inline-block;
+    width: 80%;
   }
 
   .menu-icon {

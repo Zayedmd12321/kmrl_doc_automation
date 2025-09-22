@@ -1,0 +1,163 @@
+/* Note: Assumes variables from the previous response are available globally */
+/* :root { --primary-color: #00a99d; ...etc } */
+
+/* === PAGE STRUCTURE === */
+.queue-section {
+  margin-bottom: 3rem;
+}
+
+.queue-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.queue-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Colored dot before the title */
+.queue-title::before {
+  content: '';
+  display: block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+.queue-title.high::before { background-color: #C53030; }
+.queue-title.medium::before { background-color: #B7791F; }
+.queue-title.low::before { background-color: #2F855A; }
+
+.item-count {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background-color: #EDF2F7;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 1.5rem;
+}
+
+/* === DOCUMENT CARD === */
+.document-card {
+  background-color: var(--bg-card);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+  border-left-width: 5px; /* Keep the colored left border */
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.document-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-md);
+}
+
+.document-card.urgency-high { border-left-color: #C53030; }
+.document-card.urgency-medium { border-left-color: #B7791F; }
+.document-card.urgency-low { border-left-color: #2F855A; }
+
+.card-header {
+  padding: 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.card-filename {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 0.25rem 0;
+}
+
+.card-date {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.card-content {
+  padding: 1.25rem;
+  flex-grow: 1;
+}
+
+.card-content h4 {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Checklist style for Action Items */
+.action-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.action-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.action-item-icon {
+  flex-shrink: 0;
+  margin-top: 3px;
+  color: var(--primary-color);
+}
+
+.no-items {
+  font-style: italic;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.card-footer {
+  padding: 1rem 1.25rem;
+  background-color: #F7FAFC;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+/* Primary solid button */
+.card-action-button {
+  background-color: var(--primary-color);
+  border: 1px solid var(--primary-color);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.card-action-button:hover {
+  background-color: var(--primary-color-dark);
+}
+
+/* Reusing tag styles */
+.tag-container { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.tag { padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+.tag.tag-department { background-color: #E6FFFA; color: #2C7A7B; }
