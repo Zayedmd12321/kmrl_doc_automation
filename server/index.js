@@ -1,62 +1,99 @@
+// index.js
+
 const express = require("express");
 const fileUpload = require("express-fileupload");
 const cors = require("cors");
 const pdfParse = require("pdf-parse");
 const Tesseract = require("tesseract.js");
 const fs = require("fs");
+const path = require("path");
+const imaps = require("imap-simple");
+
+// --- 1. Import new modules ---
+const http = require('http');
+const { Server } = require("socket.io");
 
 const { GoogleGenAI } = require("@google/genai");
-const ai = new GoogleGenAI({ apiKey: "AIzaSyAJSWLHCVmLVam_3EsV-1MgfxEbpaOai_A" });
+// IMPORTANT: Move your API Key to an environment variable for security!
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY || "AIzaSyArEXQ3zFtSzJqHOoAP_Ebn9PYP9YNB_QA"
+});
 
 
 const app = express();
-app.use(cors());
-app.use(fileUpload());
 
-app.post("/upload", async (req, res) => {
-  if (!req.files || !req.files.file) {
-    return res.status(400).send("No file uploaded");
-  }
-
-  const file = req.files.file;
-  const dataBuffer = file.data;
-
-  try {
-    let text = "";
-    if (file.name.endsWith(".pdf")) {
-      const data = await pdfParse(dataBuffer);
-      text = data.text.trim();
-
-      if (!text) {
-        const tempPath = `./${file.name}`;
-        fs.writeFileSync(tempPath, dataBuffer);
-        const { data: { text: ocrText } } = await Tesseract.recognize(tempPath, "eng+mal");
-        text = ocrText;
-        fs.unlinkSync(tempPath);
-      }
-    } else {
-      const tempPath = `./${file.name}`;
-      fs.writeFileSync(tempPath, dataBuffer);
-      const { data: { text: ocrText } } = await Tesseract.recognize(tempPath, "eng+mal");
-      text = ocrText;
-      fs.unlinkSync(tempPath);
-    }
-
-    res.json({ filename: file.name, text });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Error extracting text");
+// --- 2. Setup Socket.io ---
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:3000", // Your React app's URL
+    methods: ["GET", "POST"]
   }
 });
 
-app.use(express.json()); // Needed for JSON body parsing
+// Store connected clients
+let activeSocket = null;
+io.on('connection', (socket) => {
+  console.log('✅ A user connected');
+  activeSocket = socket;
+  socket.on('disconnect', () => {
+    console.log('❌ User disconnected');
+    activeSocket = null;
+  });
+});
 
-app.post("/summarize", async (req, res) => {
+
+app.use(cors());
+app.use(fileUpload());
+app.use(express.json());
+
+// ... (rest of your file up to startMailListener)
+// Make sure attachments folder exists
+const attachmentsDir = path.join(__dirname, "attachments");
+if (!fs.existsSync(attachmentsDir)) {
+  fs.mkdirSync(attachmentsDir, { recursive: true });
+}
+
+let latestSummaries = [];
+
+/* ---------------- TEXT EXTRACTION ---------------- */
+// ... (no changes here)
+async function extractTextFromFile(filePath, buffer) {
   try {
-    const { text } = req.body;
-    if (!text) return res.status(400).send("No text provided");
+    let text = "";
+    if (filePath.endsWith(".pdf")) {
+      const data = await pdfParse(buffer || fs.readFileSync(filePath));
+      text = data.text.trim();
+      if (!text) {
+        const { data: { text: ocrText } } = await Tesseract.recognize(
+          filePath,
+          "eng+mal"
+        );
+        text = ocrText;
+      }
+    } else {
+      const { data: { text: ocrText } } = await Tesseract.recognize(
+        filePath,
+        "eng+mal"
+      );
+      text = ocrText;
+    }
+    return text;
+  } catch (err) {
+    console.error("❌ Error extracting text:", err);
+    return "";
+  }
+}
 
-    // Step 1: Ask Gemini to classify relevant departments
+/* ---------------- SUMMARIZATION ---------------- */
+// ... (no changes here)
+async function summarizeText(text) {
+  let departments = ["General"];
+  let insights = {};
+  let summaries = {};
+
+  try {
+    // Step 1: Department classification
     const classifyResponse = await ai.models.generateContent({
       model: "gemini-2.5-pro",
       contents: `
@@ -77,7 +114,6 @@ ${text}
 `
     });
 
-    let departments;
     try {
       let raw = classifyResponse.text.trim();
       raw = raw.replace(/```json/i, "").replace(/```/g, "").trim();
@@ -88,7 +124,7 @@ ${text}
       departments = ["General"];
     }
 
-    // --- NEW: Step 2: Extract Structured Insights ---
+    // Step 2: Structured insights
     const insightsPrompt = `
 Analyze the document and extract the following information.
 Return ONLY valid JSON.
@@ -104,24 +140,25 @@ Format:
 Document:
 ${text}
 `;
-    const insightsResponse = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: insightsPrompt
-    });
-
-    let insights = {};
     try {
-        let raw = insightsResponse.text.trim();
-        raw = raw.replace(/```json/i, "").replace(/```/g, "").trim();
-        insights = JSON.parse(raw);
+      const insightsResponse = await ai.models.generateContent({
+        model: "gemini-2.5-pro",
+        contents: insightsPrompt
+      });
+      let raw = insightsResponse.text.trim();
+      raw = raw.replace(/```json/i, "").replace(/```/g, "").trim();
+      insights = JSON.parse(raw);
     } catch (err) {
-        console.error("Insights parse error:", err, "Raw:", insightsResponse.text);
-        insights = { general_summary: "Could not generate summary.", action_items: [], key_dates: [], urgency: "N/A" };
+      console.error("Insights parse error:", err, "Raw:", insightsResponse.text);
+      insights = {
+        general_summary: "Could not generate summary.",
+        action_items: [],
+        key_dates: [],
+        urgency: "N/A"
+      };
     }
 
-
-    // Step 3: Tailor summaries for each detected department
-    let summaries = {};
+    // Step 3: Department-specific summaries
     for (const dept of departments) {
       const deptResponse = await ai.models.generateContent({
         model: "gemini-2.5-flash",
@@ -134,22 +171,135 @@ Document:
 ${text}
 `
       });
-
       summaries[dept] = deptResponse.text.trim();
     }
-
-    // --- UPDATED FINAL RESPONSE ---
-    res.json({
-      departments,
-      summaries,
-      insights // Insights are now included
-    });
-    
   } catch (err) {
     console.error("Gemini API error:", err);
-    res.status(500).send("Error summarizing text");
+  }
+
+  return { departments, insights, summaries };
+}
+
+/* ---------------- ROUTES ---------------- */
+// ... (no changes here)
+app.post("/upload", async (req, res) => {
+  if (!req.files || !req.files.file) return res.status(400).send("No file uploaded");
+
+  const file = req.files.file;
+  const filePath = path.join(__dirname, file.name);
+  fs.writeFileSync(filePath, file.data);
+
+  try {
+    const text = await extractTextFromFile(filePath, file.data);
+    fs.unlinkSync(filePath);
+
+    // Note: The /upload route is now separate from the summarize logic used by mail
+    // We now call summarizeText directly here.
+    const result = await summarizeText(text);
+    res.json({ filename: file.name, text, ...result });
+  } catch (err) {
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    res.status(500).send("Error processing file");
   }
 });
 
 
-app.listen(5000, () => console.log("✅ Server running on http://localhost:5000"));
+app.post("/summarize", async (req, res) => {
+  const { text } = req.body;
+  if (!text) return res.status(400).send("No text provided");
+
+  const result = await summarizeText(text);
+  res.json(result);
+});
+
+app.get("/summaries", (req, res) => {
+  res.json(latestSummaries);
+});
+
+
+/* ---------------- GMAIL LISTENER ---------------- */
+let isProcessing = false;
+
+async function startMailListener() {
+  const config = {
+    imap: {
+      // IMPORTANT: Move credentials to environment variables for security!
+      user: "kmrl.codecatalyst@gmail.com",
+      password: "oztw lpkh yvtk kykr",
+      host: "imap.gmail.com",
+      port: 993,
+      tls: true,
+      authTimeout: 3000,
+      tlsOptions: { rejectUnauthorized: false }
+    }
+  };
+
+  try {
+    const connection = await imaps.connect(config);
+    await connection.openBox("INBOX");
+    console.log("✅ Gmail listener started...");
+
+    setInterval(async () => {
+      if (isProcessing) {
+        console.log("⏳ Skipping loop: still processing...");
+        return;
+      }
+      isProcessing = true;
+
+      try {
+        const searchCriteria = ["UNSEEN"];
+        const fetchOptions = { bodies: [""], struct: true };
+        const messages = await connection.search(searchCriteria, fetchOptions);
+
+        for (const msg of messages) {
+          const parts = imaps.getParts(msg.attributes.struct);
+
+          for (const part of parts) {
+            if (part.disposition && part.disposition.type.toUpperCase() === "ATTACHMENT") {
+              const filename = part.disposition.params.filename;
+              console.log(`📩 Processing new attachment: ${filename}`);
+
+              // --- 3. Emit "processing:start" event ---
+              if (activeSocket) {
+                activeSocket.emit("processing:start", { filename });
+              }
+
+              const attachment = await connection.getPartData(msg, part);
+              const filePath = path.join(attachmentsDir, filename);
+              fs.writeFileSync(filePath, attachment);
+
+              const text = await extractTextFromFile(filePath);
+              console.log("⚡ Generating summary...");
+              const result = await summarizeText(text);
+
+              // --- 4. Emit "processing:complete" event with results ---
+              if (activeSocket) {
+                activeSocket.emit("processing:complete", { ...result, fullText: text });
+              }
+
+              latestSummaries.push({ subject: msg.parts[0].body.subject, result });
+              console.log("📊 Auto Summary Result:", JSON.stringify(result, null, 2));
+
+              if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+            }
+          }
+          await connection.addFlags(msg.attributes.uid, ["\\Seen"]);
+        }
+      } catch (err) {
+        console.error("❌ Mail loop error:", err);
+      } finally {
+        isProcessing = false;
+      }
+    }, 30000); // Check every 30 seconds
+  } catch (err) {
+    console.error("❌ Gmail listener error:", err);
+  }
+}
+
+startMailListener();
+
+/* ---------------- SERVER ---------------- */
+// --- 5. Start the server using the http instance ---
+server.listen(5000, () =>
+  console.log("✅ Server running on http://localhost:5000")
+);

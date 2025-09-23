@@ -1,26 +1,49 @@
-import React, { useState } from "react";
+// App.js
+
+import React, { useState, useEffect } from "react"; // Import useEffect
 import axios from "axios";
-// import { FaBrain } from 'react-icons/fa'; // No longer needed for the removed header
+import { Spinner as ChakraSpinner } from "@chakra-ui/react";
+import io from "socket.io-client"; // Import socket.io-client
 
-// Import the Chakra Spinner
-import { Spinner as ChakraSpinner, Box, VStack, Center, Text } from "@chakra-ui/react";
-
-
-// Import the new CSS file for styling
 import './App.css';
-
-// Import your existing components
 import UploadPanel from "./components/UploadPanel";
 import AnalysisPanel from "./components/AnalysisPanel";
 import ActionsPanel from "./components/ActionsPanel";
 import Navbar from "./components/Navbar";
-// No longer importing custom Spinner if using Chakra's
+
+// --- 1. Establish socket connection outside the component ---
+const socket = io("http://localhost:5000");
 
 function App() {
   const [file, setFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [analysisResult, setAnalysisResult] = useState(null);
   const [fullText, setFullText] = useState("");
+
+  // --- 2. Add useEffect to handle socket events ---
+  useEffect(() => {
+    // Listener for when an email attachment starts processing
+    socket.on("processing:start", (data) => {
+      console.log("Socket: Processing started for", data.filename);
+      setAnalysisResult(null); // Clear previous results
+      setFile({ name: `Processing email attachment: ${data.filename}` }); // Show a message
+      setIsLoading(true);
+    });
+
+    // Listener for when analysis is complete
+    socket.on("processing:complete", (result) => {
+      console.log("Socket: Processing complete.");
+      setAnalysisResult(result);
+      setFullText(result.fullText || "");
+      setIsLoading(false);
+    });
+
+    // Clean up listeners when the component unmounts
+    return () => {
+      socket.off("processing:start");
+      socket.off("processing:complete");
+    };
+  }, []); // Empty dependency array means this runs once on mount
 
   const handleUploadAndAnalyze = async (acceptedFile) => {
     if (!acceptedFile) return;
@@ -32,12 +55,10 @@ function App() {
     formData.append("file", acceptedFile);
 
     try {
-      const extractRes = await axios.post("http://localhost:5000/upload", formData);
-      const { text } = extractRes.data;
-      setFullText(text);
-
-      const summaryRes = await axios.post("http://localhost:5000/summarize", { text });
-      setAnalysisResult(summaryRes.data);
+      // The /upload endpoint now handles the full process
+      const res = await axios.post("http://localhost:5000/upload", formData);
+      setFullText(res.data.text);
+      setAnalysisResult(res.data);
     } catch (err) {
       console.error("An error occurred during analysis:", err);
       alert("Analysis failed. Please check the console for details.");
@@ -46,8 +67,9 @@ function App() {
     }
   };
 
+  // The rest of your return statement is unchanged
   return (
-    <div className="app-container">
+     <div className="app-container">
       <Navbar />
 
       <main className="main-content-new-layout"> {/* New class for main content */}
@@ -68,6 +90,8 @@ function App() {
               <div className="loading-container">
                 <ChakraSpinner size="xl" color="#00a99d" thickness="4px" />
                 <p className="loading-text">Analyzing document...</p>
+                 {/* Show the filename being processed, works for both uploads and emails */}
+                {file && <p className="processing-filename">{file.name}</p>}
               </div>
             ) : !analysisResult ? (
               <div className="placeholder-content">
@@ -75,7 +99,7 @@ function App() {
                   KMRL Document Analyser
                 </p>
                 <p className="placeholder-text-small">
-                  Upload a document to unlock its core information, key entities, and much more.
+                  Upload a document or send an email with an attachment to start.
                 </p>
                 <ul className="feature-list">
                   <li>OCR and Text Extraction</li>
