@@ -12,7 +12,7 @@ import ActionsPanel from "./components/ActionsPanel";
 import Navbar from "./components/Navbar";
 
 // --- 1. Establish socket connection outside the component ---
-const socket = io("http://localhost:5000");
+const socket = io(process.env.BACKEND_URL);
 
 function App() {
   const [file, setFile] = useState(null);
