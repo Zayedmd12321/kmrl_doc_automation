@@ -56,7 +56,7 @@ function App() {
 
     try {
       // The /upload endpoint now handles the full process
-      const res = await axios.post("http://localhost:5000/upload", formData);
+      const res = await axios.post(process.env.BACKEND_URL+"/upload", formData);
       setFullText(res.data.text);
       setAnalysisResult(res.data);
     } catch (err) {
