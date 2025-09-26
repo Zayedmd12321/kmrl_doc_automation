@@ -1,4 +1,5 @@
 // index.js
+require('dotenv').config(); // Loads environment variables from .env file
 
 const express = require("express");
 const fileUpload = require("express-fileupload");
@@ -8,25 +9,24 @@ const Tesseract = require("tesseract.js");
 const fs = require("fs");
 const path = require("path");
 const imaps = require("imap-simple");
-
-// --- 1. Import new modules ---
 const http = require('http');
 const { Server } = require("socket.io");
-
 const { GoogleGenAI } = require("@google/genai");
-// IMPORTANT: Move your API Key to an environment variable for security!
+
+// --- SECURE: Using environment variable for API Key ---
 const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY || "AIzaSyArEXQ3zFtSzJqHOoAP_Ebn9PYP9YNB_QA"
+  apiKey: process.env.GEMINI_API_KEY
 });
 
-
 const app = express();
-
-// --- 2. Setup Socket.io ---
 const server = http.createServer(app);
+
+// --- PRODUCTION-READY: Set CORS from environment variable ---
+const allowedOrigin = process.env.FRONTEND_URL;
+
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000", // Your React app's URL
+    origin: allowedOrigin,
     methods: ["GET", "POST"]
   }
 });
@@ -42,12 +42,10 @@ io.on('connection', (socket) => {
   });
 });
 
-
-app.use(cors());
+app.use(cors({ origin: allowedOrigin }));
 app.use(fileUpload());
 app.use(express.json());
 
-// ... (rest of your file up to startMailListener)
 // Make sure attachments folder exists
 const attachmentsDir = path.join(__dirname, "attachments");
 if (!fs.existsSync(attachmentsDir)) {
@@ -57,7 +55,6 @@ if (!fs.existsSync(attachmentsDir)) {
 let latestSummaries = [];
 
 /* ---------------- TEXT EXTRACTION ---------------- */
-// ... (no changes here)
 async function extractTextFromFile(filePath, buffer) {
   try {
     let text = "";
@@ -86,7 +83,6 @@ async function extractTextFromFile(filePath, buffer) {
 }
 
 /* ---------------- SUMMARIZATION ---------------- */
-// ... (no changes here)
 async function summarizeText(text) {
   let departments = ["General"];
   let insights = {};
@@ -161,7 +157,7 @@ ${text}
     // Step 3: Department-specific summaries
     for (const dept of departments) {
       const deptResponse = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-2.5-pro",
         contents: `
 Summarize this document for the perspective of the ${dept} department.
 Only highlight points that are relevant for ${dept}.
@@ -181,7 +177,6 @@ ${text}
 }
 
 /* ---------------- ROUTES ---------------- */
-// ... (no changes here)
 app.post("/upload", async (req, res) => {
   if (!req.files || !req.files.file) return res.status(400).send("No file uploaded");
 
@@ -192,9 +187,6 @@ app.post("/upload", async (req, res) => {
   try {
     const text = await extractTextFromFile(filePath, file.data);
     fs.unlinkSync(filePath);
-
-    // Note: The /upload route is now separate from the summarize logic used by mail
-    // We now call summarizeText directly here.
     const result = await summarizeText(text);
     res.json({ filename: file.name, text, ...result });
   } catch (err) {
@@ -203,11 +195,9 @@ app.post("/upload", async (req, res) => {
   }
 });
 
-
 app.post("/summarize", async (req, res) => {
   const { text } = req.body;
   if (!text) return res.status(400).send("No text provided");
-
   const result = await summarizeText(text);
   res.json(result);
 });
@@ -216,16 +206,15 @@ app.get("/summaries", (req, res) => {
   res.json(latestSummaries);
 });
 
-
 /* ---------------- GMAIL LISTENER ---------------- */
 let isProcessing = false;
 
 async function startMailListener() {
+    // --- SECURE: Using environment variables for credentials ---
   const config = {
     imap: {
-      // IMPORTANT: Move credentials to environment variables for security!
-      user: "kmrl.codecatalyst@gmail.com",
-      password: "oztw lpkh yvtk kykr",
+      user: process.env.GMAIL_USER,
+      password: process.env.GMAIL_PASSWORD,
       host: "imap.gmail.com",
       port: 993,
       tls: true,
@@ -253,13 +242,11 @@ async function startMailListener() {
 
         for (const msg of messages) {
           const parts = imaps.getParts(msg.attributes.struct);
-
           for (const part of parts) {
             if (part.disposition && part.disposition.type.toUpperCase() === "ATTACHMENT") {
               const filename = part.disposition.params.filename;
               console.log(`📩 Processing new attachment: ${filename}`);
 
-              // --- 3. Emit "processing:start" event ---
               if (activeSocket) {
                 activeSocket.emit("processing:start", { filename });
               }
@@ -272,7 +259,6 @@ async function startMailListener() {
               console.log("⚡ Generating summary...");
               const result = await summarizeText(text);
 
-              // --- 4. Emit "processing:complete" event with results ---
               if (activeSocket) {
                 activeSocket.emit("processing:complete", { ...result, fullText: text });
               }
@@ -290,7 +276,7 @@ async function startMailListener() {
       } finally {
         isProcessing = false;
       }
-    }, 30000); // Check every 30 seconds
+    }, 30000);
   } catch (err) {
     console.error("❌ Gmail listener error:", err);
   }
@@ -299,7 +285,8 @@ async function startMailListener() {
 startMailListener();
 
 /* ---------------- SERVER ---------------- */
-// --- 5. Start the server using the http instance ---
-server.listen(5000, () =>
-  console.log("✅ Server running on http://localhost:5000")
+// --- PRODUCTION-READY: Use dynamic port ---
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, () =>
+  console.log(`✅ Server running on port ${PORT}`)
 );
