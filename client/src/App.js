@@ -12,7 +12,7 @@ import ActionsPanel from "./components/ActionsPanel";
 import Navbar from "./components/Navbar";
 
 // --- 1. Establish socket connection outside the component ---
-const socket = io(process.env.BACKEND_URL);
+const socket = io(process.env.REACT_APP_BACKEND_URL);
 
 function App() {
   const [file, setFile] = useState(null);
@@ -56,7 +56,7 @@ function App() {
 
     try {
       // The /upload endpoint now handles the full process
-      const res = await axios.post(`${process.env.BACKEND_URL}/upload`, formData);
+      const res = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/upload`, formData);
       setFullText(res.data.text);
       setAnalysisResult(res.data);
     } catch (err) {
