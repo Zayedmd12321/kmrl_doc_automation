@@ -1,4 +1,7 @@
+// src/components/DocumentCard.js
+
 import React from 'react';
+import { Link } from 'react-router-dom'; // 1. Import the Link component
 
 // A simple checkmark icon component
 const CheckIcon = () => (
@@ -35,7 +38,10 @@ const DocumentCard = ({ document }) => {
             <span key={dept} className="tag tag-department">{dept}</span>
           ))}
         </div>
-        <button className="card-action-button">View Details</button>
+        {/* 2. Replace the button with the Link component */}
+        <Link to={`/document/${document._id}`} className="card-action-button">
+          View Details
+        </Link>
       </div>
     </div>
   );

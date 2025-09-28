@@ -7,6 +7,7 @@ import LoginPage from "./login";
 import PriorityQueuePage from "./PriorityQueuePage";
 import BrowsePage from "./BrowsePage";
 import UpcomingDeadlinesPage from "./UpcomingDeadlinesPage";
+import DocumentDetailPage from "./components/DocumentDetailPage";
 
 // This code is correct for react-router-dom v6
 ReactDOM.createRoot(document.getElementById("root")).render(
@@ -19,6 +20,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <Route path="/priority" element={<PriorityQueuePage />} />
           <Route path="/departments" element={<BrowsePage />} />
           <Route path="/deadlines" element={<UpcomingDeadlinesPage />} />
+          <Route path="/document/:documentId" element={<DocumentDetailPage />}></Route>
         </Routes>
       </BrowserRouter>
     </ChakraProvider>

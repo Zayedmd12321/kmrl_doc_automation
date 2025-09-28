@@ -7,17 +7,17 @@ export const documents = [
     "storageKey": "uploads/2025/09/project_proposal_q4_unique_id.pdf",
     "status": "completed",
     "analysis": {
-      "generalSummary": "This document outlines the proposal for the Q4 project, including budget and timeline.",
+      "generalSummary": "This report for the Rolling Stock Division for August 2025 details maintenance activities, highlighting a fleet availability of 98.7%. Key events include the completion of quarterly preventive maintenance, the initiation of a Root Cause Analysis for a recurring door sensor fault on trainset RS-11, and the full implementation of a new safety protocol. The report also flags a critical delay in the supply of essential IGBT modules which has impacted spares inventory, and outlines progress on special projects like the depot expansion and a new IoT-based predictive maintenance pilot, for which a request for two new technicians has been sent to HR.",
       "urgency": "High",
       "actionItems": [
-        "Schedule budget review meeting with Finance",
-        "Finalize resource allocation by end of week"
+                "Finalize the Root Cause Analysis (RCA) report for the RS-11 door sensor and submit a design modification proposal to the Safety Department.; Expedite the delivery of IGBT modules under PO-KMRL/RS/2024/112 or explore alternative emergency sourcing options.; The Finance Department to provide an opinion on invoking the penalty clause for the delayed IGBT module purchase order.; The HR Department to initiate and fast-track the recruitment process for two Senior Technicians (Data Systems).; The Finance Department to approve the budget allocation for the IoT-based Predictive Maintenance pilot project.; The Civil Engineering Department to review and incorporate feedback on the depot expansion drawings (AD-E/CIV/004 Rev 2)."
+
       ],
       "keyDates": [
         { "date": "2025-10-01", "event": "Q4 Project Kick-off" },
         { "date": "2025-12-15", "event": "Q4 project budget finalization" }
       ],
-      "departments": ["Engineering", "Finance"],
+      "departments": ["Engineering", "Procurement", "HR", "Safety", "Finance"],
       "summaries": {
         "Engineering": "The engineering team will require three new software licenses and two senior developers...",
         "Finance": "The projected budget is $50,000, with a 10% contingency. A detailed cost breakdown is required..."
