@@ -1,12 +1,12 @@
+// AnalysisPanel.js
+
 import React, { useState } from 'react';
 import { FiAlertTriangle, FiCheckSquare, FiCalendar } from 'react-icons/fi';
 import { GoChevronDown } from 'react-icons/go';
 import ReactMarkdown from 'react-markdown';
 
-// Import CSS module
 import styles from './AnalysisPanel.module.css';
 
-// A minimalist component for displaying key insights
 const InsightItem = ({ icon: Icon, title, children }) => (
   <div className={styles['insight-item']}>
     <Icon className={styles['insight-icon']} />
@@ -17,12 +17,11 @@ const InsightItem = ({ icon: Icon, title, children }) => (
   </div>
 );
 
-// A custom Accordion component
 const Accordion = ({ items }) => {
-  const [activeIndex, setActiveIndex] = useState(0); // First item open by default
+  const [activeIndex, setActiveIndex] = useState(0);
 
   const handleClick = (index) => {
-    setActiveIndex(activeIndex === index ? null : index); // Toggle on/off
+    setActiveIndex(activeIndex === index ? null : index);
   };
 
   return (
@@ -57,7 +56,18 @@ const Accordion = ({ items }) => {
 
 function AnalysisPanel({ result, fullText }) {
   const [activeTab, setActiveTab] = useState('overview');
-  const { departments = [], summaries = {}, insights = {} } = result || {};
+
+  const { analysis = {} } = result || {};
+  
+  const {
+    departments = [],
+    summaries = {},
+    generalSummary,
+    actionItems = [],
+    keyDates = [],
+    urgency,
+  } = analysis;
+
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -95,7 +105,7 @@ function AnalysisPanel({ result, fullText }) {
           <div className={styles['tab-content']}>
             <h3 className={styles['section-heading']}>General Summary</h3>
             <p className={styles['summary-text']}>
-              {insights.general_summary || 'No summary available.'}
+              {generalSummary || 'No summary available.'}
             </p>
 
             <h3 className={styles['section-heading']}>Key Insights</h3>
@@ -103,23 +113,42 @@ function AnalysisPanel({ result, fullText }) {
               <InsightItem icon={FiAlertTriangle} title="Urgency">
                 <span
                   className={`${styles.tag} ${
-                    insights.urgency?.startsWith('High')
+                    urgency?.startsWith('High')
                       ? styles.red
-                      : styles.green
+                      : urgency.startsWith('Medium') ? styles.yellow 
+                      :styles.green
                   }`}
                 >
-                  {insights.urgency || 'N/A'}
+                  {urgency || 'N/A'}
                 </span>
               </InsightItem>
+
+              {/* --- MODIFICATION FOR ACTION ITEMS --- */}
               <InsightItem icon={FiCheckSquare} title="Action Items">
-                {insights.action_items?.length
-                  ? insights.action_items.join('; ')
-                  : 'None identified.'}
+                {actionItems?.length > 0 ? (
+                  <ul className={styles['point-wise-list']}>
+                    {actionItems.map((item, index) => (
+                      <li key={index}>{item}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  'None identified.'
+                )}
               </InsightItem>
+
+              {/* --- MODIFICATION FOR KEY DATES --- */}
               <InsightItem icon={FiCalendar} title="Key Dates">
-                {insights.key_dates?.length
-                  ? insights.key_dates.join(', ')
-                  : 'None identified.'}
+                {keyDates?.length > 0 ? (
+                  <ul className={styles['point-wise-list']}>
+                    {keyDates.map((item, index) => (
+                      <li key={index}>
+                        {`${item.date}: ${item.event}`}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  'None identified.'
+                )}
               </InsightItem>
             </div>
           </div>

@@ -77,6 +77,10 @@
   background-color: #F0FFF4;
   color: #2F855A;
 }
+.tag.yellow {
+  background-color: #FFFAF0; 
+  color: #B7791F;
+}
 .tag.red {
   background-color: #FFF5F5;
   color: #C53030;

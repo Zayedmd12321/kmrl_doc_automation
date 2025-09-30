@@ -12,6 +12,7 @@ const imaps = require("imap-simple");
 const http = require('http');
 const { Server } = require("socket.io");
 const { GoogleGenAI } = require("@google/genai");
+const crypto = require('crypto'); // Added for generating unique IDs
 
 // --- SECURE: Using environment variable for API Key ---
 const ai = new GoogleGenAI({
@@ -95,7 +96,7 @@ async function summarizeText(text) {
       contents: `
 You are an assistant for Kochi Metro Rail Limited (KMRL).
 Given this document, identify which department(s) it is most relevant to.
-Departments to choose from: Engineering, HR, Finance, Procurement, Safety, Legal, Other.
+Departments to choose from: Engineering, HR, Finance, Procurement, Safety, Legal, Operations, Other.
 
 ⚠️ Important: Return ONLY valid JSON, no explanations, no markdown fences.
 
@@ -120,16 +121,18 @@ ${text}
       departments = ["General"];
     }
 
-    // Step 2: Structured insights
+    // Step 2: Structured insights (MODIFIED PROMPT)
     const insightsPrompt = `
 Analyze the document and extract the following information.
 Return ONLY valid JSON.
 
 Format:
 {
-  "general_summary": "A concise, one-paragraph summary of the entire document.",
-  "action_items": ["List of clear, actionable tasks mentioned."],
-  "key_dates": ["List of any dates or deadlines found."],
+  "generalSummary": "A concise, one-paragraph summary of the entire document.",
+  "actionItems": ["List of clear, actionable tasks mentioned."],
+  "keyDates": [
+    { "date": "YYYY-MM-DD", "event": "A short description of the event or deadline." }
+  ],
   "urgency": "Rate the urgency as Low, Medium, or High, with a one-sentence reason."
 }
 
@@ -147,9 +150,9 @@ ${text}
     } catch (err) {
       console.error("Insights parse error:", err, "Raw:", insightsResponse.text);
       insights = {
-        general_summary: "Could not generate summary.",
-        action_items: [],
-        key_dates: [],
+        generalSummary: "Could not generate summary.",
+        actionItems: [],
+        keyDates: [],
         urgency: "N/A"
       };
     }
@@ -187,8 +190,33 @@ app.post("/upload", async (req, res) => {
   try {
     const text = await extractTextFromFile(filePath, file.data);
     fs.unlinkSync(filePath);
+    
     const result = await summarizeText(text);
-    res.json({ filename: file.name, text, ...result });
+
+    // MODIFIED: Assemble the final JSON object in the desired structure
+    const finalResponse = {
+      _id: crypto.randomUUID(),
+      fileName: file.name,
+      fileType: file.mimetype,
+      fileSize: file.size,
+      storageKey: `uploads/${new Date().getFullYear()}/${new Date().getMonth() + 1}/${file.name}`,
+      status: "completed",
+      analysis: {
+        generalSummary: result.insights.generalSummary,
+        urgency: result.insights.urgency,
+        actionItems: result.insights.actionItems,
+        keyDates: result.insights.keyDates,
+        departments: result.departments,
+        summaries: result.summaries
+      },
+      fullText: text, // Optionally include the full text
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    res.json(finalResponse);
+    console.log("📊 Auto Summary Result:", JSON.stringify(finalResponse, null, 2));
+
   } catch (err) {
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
     res.status(500).send("Error processing file");
@@ -198,6 +226,8 @@ app.post("/upload", async (req, res) => {
 app.post("/summarize", async (req, res) => {
   const { text } = req.body;
   if (!text) return res.status(400).send("No text provided");
+  // Note: This route still returns the raw AI result, not the fully structured object.
+  // It could be updated similarly to the /upload route if needed.
   const result = await summarizeText(text);
   res.json(result);
 });
@@ -259,12 +289,33 @@ async function startMailListener() {
               console.log("⚡ Generating summary...");
               const result = await summarizeText(text);
 
+              // MODIFIED: Assemble the final JSON object for socket emission
+              const finalResponse = {
+                _id: crypto.randomUUID(),
+                fileName: filename,
+                fileType: part.type + '/' + part.subtype,
+                fileSize: part.size,
+                storageKey: `uploads/${new Date().getFullYear()}/${new Date().getMonth() + 1}/${filename}`,
+                status: "completed",
+                analysis: {
+                  generalSummary: result.insights.generalSummary,
+                  urgency: result.insights.urgency,
+                  actionItems: result.insights.actionItems,
+                  keyDates: result.insights.keyDates,
+                  departments: result.departments,
+                  summaries: result.summaries
+                },
+                fullText: text,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+              };
+
               if (activeSocket) {
-                activeSocket.emit("processing:complete", { ...result, fullText: text });
+                activeSocket.emit("processing:complete", finalResponse);
               }
 
-              latestSummaries.push({ subject: msg.parts[0].body.subject, result });
-              console.log("📊 Auto Summary Result:", JSON.stringify(result, null, 2));
+              latestSummaries.push({ subject: msg.parts[0].body.subject, result: finalResponse });
+              console.log("📊 Auto Summary Result:", JSON.stringify(finalResponse, null, 2));
 
               if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
             }

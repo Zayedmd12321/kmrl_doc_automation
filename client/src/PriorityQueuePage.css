@@ -161,3 +161,66 @@
 .tag-container { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .tag { padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
 .tag.tag-department { background-color: #E6FFFA; color: #2C7A7B; }
+
+
+.card-footer {
+  padding: 1rem 1.25rem;
+  background-color: #F7FAFC;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  /* Add a gap for consistent spacing between items */
+  gap: 1rem;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+.tag-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  
+  /* 1. Allow the container to grow and shrink */
+  flex: 1;
+
+  /* 2. Prevent content from overflowing its container */
+  overflow: hidden;
+
+  /* 3. A fix to ensure the container can shrink below its content size */
+  min-width: 0;
+}
+
+/* === RESPONSIVE STYLES for tablets and mobile === */
+@media (max-width: 768px) {
+  /* 1. Switch to a single-column layout for the cards */
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* 2. Adjust header font sizes for better readability */
+  .page-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .queue-title {
+    font-size: 1.25rem;
+  }
+
+  /* 3. Stack the queue header items vertically */
+  .queue-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  /* 4. Ensure card content has slightly less padding on small screens */
+  .card-header,
+  .card-content,
+  .card-footer {
+    padding: 1rem;
+  }
+
+  .card-footer {
+    flex-direction: column;
+  }
+}

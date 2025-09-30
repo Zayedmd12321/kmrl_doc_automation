@@ -1,15 +1,15 @@
 // src/components/DocumentDetailPage.js
 
 import React from 'react';
-import { useParams, Link } from 'react-router-dom'; // Assuming you use React Router
-import { documents as mockDocuments } from '../db/mockData'; // Adjust path if needed
+import { useParams, Link } from 'react-router-dom';
+import { documents as mockDocuments } from '../db/mockData';
 import Navbar from './Navbar';
-import AnalysisPanel from './AnalysisPanel'; // Reuse your existing component
+import AnalysisPanel from './AnalysisPanel';
 import ActionsPanel from './ActionsPanel';
-import './DocumentDetailPage.css'; // We'll create this CSS file next
+import './DocumentDetailPage.css';
 
 function DocumentDetailPage() {
-  const { documentId } = useParams(); // Get the ID from the URL
+  const { documentId } = useParams();
   const document = mockDocuments.find(doc => doc._id === documentId);
 
   if (!document) {
@@ -27,21 +27,14 @@ function DocumentDetailPage() {
     );
   }
 
-  // We need to create a `fullText` variable for the AnalysisPanel,
-  // we can just use the general summary for the mock-up.
-  const fullText = document.analysis.generalSummary;
-  
-  // The result prop for AnalysisPanel and ActionsPanel needs to match the structure.
-  const analysisResult = {
-    departments: document.analysis.departments,
-    insights: {
-        general_summary: document.analysis.generalSummary,
-        action_items: document.analysis.actionItems,
-        key_dates: document.analysis.keyDates.map(kd => kd.date), // Extract just the date strings
-        urgency: document.analysis.urgency
-    },
-    summaries: document.analysis.summaries
-  };
+  // --- CHANGES ARE HERE ---
+
+  // 1. The manual `analysisResult` object has been completely removed.
+  //    It's no longer needed because our child components can handle the real data structure.
+
+  // 2. We get `fullText` from the document. We can use generalSummary as a fallback
+  //    if the mock data doesn't have a `fullText` property.
+  const fullText = document.fullText || document.analysis.generalSummary;
 
   return (
     <div className="app-container">
@@ -53,8 +46,10 @@ function DocumentDetailPage() {
         </div>
 
         <div className="document-detail-container">
-          <AnalysisPanel result={analysisResult} fullText={fullText} />
-          <ActionsPanel result={analysisResult} fullText={fullText} />
+          {/* 3. Pass the entire `document` object as the `result` prop.
+               AnalysisPanel is already designed to find the `analysis` object inside it. */}
+          <AnalysisPanel result={document} fullText={fullText} />
+          <ActionsPanel result={document} fullText={fullText} />
         </div>
       </main>
     </div>

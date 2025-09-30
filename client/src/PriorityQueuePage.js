@@ -1,7 +1,9 @@
+// PriorityQueuePage.js
+
 import React, { useMemo } from 'react';
 import { documents as mockDocuments } from './db/mockData';
 import Navbar from './components/Navbar';
-import DocumentCard from './components/DocumentCard'; // <-- Import the new component
+import DocumentCard from './components/DocumentCard';
 import './PriorityQueuePage.css';
 
 // Define the order of urgency levels
@@ -9,17 +11,25 @@ const URGENCY_LEVELS = ['High', 'Medium', 'Low'];
 
 function PriorityQueuePage() {
   const documentsByUrgency = useMemo(() => {
-    // Group documents by urgency using reduce for a cleaner approach
+    // --- MODIFICATION IS HERE ---
     const grouped = mockDocuments.reduce((acc, doc) => {
-      const { urgency } = doc.analysis;
-      if (!acc[urgency]) {
-        acc[urgency] = [];
+      // 1. Get the full urgency string, providing a fallback like 'Low' if it's missing.
+      const fullUrgency = doc?.analysis?.urgency || 'Low';
+
+      // 2. Extract only the level (e.g., "High") by splitting the string at the comma
+      //    and taking the first part. .trim() removes any extra spaces.
+      const urgencyLevel = fullUrgency.split(',')[0].trim();
+
+      // 3. Use the extracted level (e.g., "High", "Medium") for grouping.
+      if (!acc[urgencyLevel]) {
+        acc[urgencyLevel] = [];
       }
-      acc[urgency].push(doc);
+      acc[urgencyLevel].push(doc);
       return acc;
     }, {});
+    // --- END OF MODIFICATION ---
 
-    // Sort documents within each group by date
+    // Sort documents within each group by date (this part is unchanged)
     for (const urgency in grouped) {
       grouped[urgency].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     }

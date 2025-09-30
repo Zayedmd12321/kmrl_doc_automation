@@ -156,6 +156,14 @@ td {
   align-items: center;
   gap: 1rem;
   font-weight: 600;
+  flex-direction: row;
+}
+
+.file-name-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
 }
 
 .file-icon {
@@ -254,6 +262,11 @@ td {
   }
   
   .file-name-cell {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .file-name-link {
     flex-direction: column;
     align-items: flex-start;
   }

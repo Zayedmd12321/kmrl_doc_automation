@@ -1,9 +1,9 @@
 // App.js
 
-import React, { useState, useEffect } from "react"; // Import useEffect
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Spinner as ChakraSpinner } from "@chakra-ui/react";
-import io from "socket.io-client"; // Import socket.io-client
+import io from "socket.io-client";
 
 import './App.css';
 import UploadPanel from "./components/UploadPanel";
@@ -11,7 +11,6 @@ import AnalysisPanel from "./components/AnalysisPanel";
 import ActionsPanel from "./components/ActionsPanel";
 import Navbar from "./components/Navbar";
 
-// --- 1. Establish socket connection outside the component ---
 const socket = io(process.env.REACT_APP_BACKEND_URL);
 
 function App() {
@@ -20,30 +19,26 @@ function App() {
   const [analysisResult, setAnalysisResult] = useState(null);
   const [fullText, setFullText] = useState("");
 
-  // --- 2. Add useEffect to handle socket events ---
   useEffect(() => {
-    // Listener for when an email attachment starts processing
     socket.on("processing:start", (data) => {
       console.log("Socket: Processing started for", data.filename);
-      setAnalysisResult(null); // Clear previous results
-      setFile({ name: `Processing email attachment: ${data.filename}` }); // Show a message
+      setAnalysisResult(null);
+      setFile({ name: `Processing email attachment: ${data.filename}` });
       setIsLoading(true);
     });
 
-    // Listener for when analysis is complete
     socket.on("processing:complete", (result) => {
       console.log("Socket: Processing complete.");
       setAnalysisResult(result);
-      setFullText(result.fullText || "");
+      setFullText(result.fullText || ""); // This was already correct
       setIsLoading(false);
     });
 
-    // Clean up listeners when the component unmounts
     return () => {
       socket.off("processing:start");
       socket.off("processing:complete");
     };
-  }, []); // Empty dependency array means this runs once on mount
+  }, []);
 
   const handleUploadAndAnalyze = async (acceptedFile) => {
     if (!acceptedFile) return;
@@ -55,10 +50,12 @@ function App() {
     formData.append("file", acceptedFile);
 
     try {
-      // The /upload endpoint now handles the full process
       const res = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/upload`, formData);
-      setFullText(res.data.text);
+      // --- MODIFICATION HERE ---
+      // The full text is now in the `fullText` property, not `text`.
+      setFullText(res.data.fullText || ""); 
       setAnalysisResult(res.data);
+      console.log("Analysis Result:", res.data);
     } catch (err) {
       console.error("An error occurred during analysis:", err);
       alert("Analysis failed. Please check the console for details.");
@@ -67,16 +64,12 @@ function App() {
     }
   };
 
-  // The rest of your return statement is unchanged
   return (
      <div className="app-container">
       <Navbar />
 
-      <main className="main-content-new-layout"> {/* New class for main content */}
-        {/* The header section (KMRL Insight Engine) is removed */}
-
-        <div className="main-area"> {/* This div now holds all main content */}
-          {/* The Upload Panel now takes more space */}
+      <main className="main-content-new-layout">
+        <div className="main-area">
           <div className="upload-section">
             <UploadPanel
               onFileAccepted={handleUploadAndAnalyze}
@@ -84,13 +77,11 @@ function App() {
             />
           </div>
 
-          {/* Conditional content based on loading/analysis result, now below the upload */}
           <div className="analysis-results-section">
             {isLoading ? (
               <div className="loading-container">
                 <ChakraSpinner size="xl" color="#00a99d" thickness="4px" />
                 <p className="loading-text">Analyzing document...</p>
-                 {/* Show the filename being processed, works for both uploads and emails */}
                 {file && <p className="processing-filename">{file.name}</p>}
               </div>
             ) : !analysisResult ? (

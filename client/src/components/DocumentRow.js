@@ -1,13 +1,13 @@
 import React from 'react';
+import { Link } from 'react-router-dom'; // 1. Link is now the only import needed for navigation
 
-// A simple component to render an icon based on file extension
 const FileIcon = ({ fileName }) => {
   const extension = fileName.split('.').pop().toLowerCase();
   let icon;
 
   switch (extension) {
     case 'pdf':
-      icon = '📄'; 
+      icon = '📄';
       break;
     case 'docx':
       icon = '📝';
@@ -19,19 +19,21 @@ const FileIcon = ({ fileName }) => {
   return <span className="file-icon">{icon}</span>;
 };
 
-
 const DocumentRow = ({ doc }) => {
-  const handleRowClick = () => {
-    // Navigate to analysis page or open a modal
-    console.log(`Viewing analysis for ${doc.fileName}`);
-  };
+  // 2. The useNavigate hook and handleRowClick function have been removed.
 
   return (
-    <tr className="document-row" onClick={handleRowClick}>
+    // 3. The onClick handler is removed from the <tr> element. The row is no longer clickable.
+    <tr className="document-row">
       <td data-label="File Name">
         <div className="file-name-cell">
-          <FileIcon fileName={doc.fileName} />
-          <span>{doc.fileName}</span>
+          <Link
+            to={`/document/${doc._id}`}
+            className="file-name-link"
+          >
+            <FileIcon fileName={doc.fileName} />
+            {doc.fileName}
+          </Link>
         </div>
       </td>
       <td data-label="Departments">
@@ -42,15 +44,18 @@ const DocumentRow = ({ doc }) => {
         </div>
       </td>
       <td data-label="Urgency">
-        <span className={`tag tag-urgency tag-${doc.analysis.urgency.toLowerCase()}`}>
-          {doc.analysis.urgency}
+        <span className={`tag tag-urgency tag-${doc.analysis.urgency.split(',')[0].trim().toLowerCase()}`}>
+          {doc.analysis.urgency.split(',')[0]}
         </span>
       </td>
       <td data-label="Date Uploaded">{new Date(doc.createdAt).toLocaleDateString()}</td>
       <td className="actions-cell">
-        <div className="action-icon">
+        <Link
+          to={`/document/${doc._id}`}
+          className="file-name-link"
+        >
           <span>&rarr;</span>
-        </div>
+        </Link>
       </td>
     </tr>
   );
