@@ -163,6 +163,8 @@
   padding: 1rem 1.25rem;
   line-height: 1.6;
   color: #4A5568; /* Set a base color for paragraph text */
+  max-height: 600px;
+  overflow-y: auto;
 }
 
 /* Style for subheadings like "Critical Action Items" */

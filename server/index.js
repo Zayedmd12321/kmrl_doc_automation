@@ -12,7 +12,7 @@ const imaps = require("imap-simple");
 const http = require('http');
 const { Server } = require("socket.io");
 const { GoogleGenAI } = require("@google/genai");
-const crypto = require('crypto'); // Added for generating unique IDs
+const crypto = require('crypto'); // For unique IDs
 
 // --- SECURE: Using environment variable for API Key ---
 const ai = new GoogleGenAI({
@@ -47,7 +47,7 @@ app.use(cors({ origin: allowedOrigin }));
 app.use(fileUpload());
 app.use(express.json());
 
-// Make sure attachments folder exists
+// Ensure attachments folder exists
 const attachmentsDir = path.join(__dirname, "attachments");
 if (!fs.existsSync(attachmentsDir)) {
   fs.mkdirSync(attachmentsDir, { recursive: true });
@@ -83,100 +83,87 @@ async function extractTextFromFile(filePath, buffer) {
   }
 }
 
-/* ---------------- SUMMARIZATION ---------------- */
+/* ---------------- SUMMARIZATION (NEW SINGLE-PROMPT) ---------------- */
 async function summarizeText(text) {
-  let departments = ["General"];
-  let insights = {};
-  let summaries = {};
-
-  try {
-    // Step 1: Department classification
-    const classifyResponse = await ai.models.generateContent({
-      model: "gemini-2.5-pro",
-      contents: `
+  let dept_summaries = {};
+  const unifiedPrompt = `
 You are an assistant for Kochi Metro Rail Limited (KMRL).
-Given this document, identify which department(s) it is most relevant to.
-Departments to choose from: Engineering, HR, Finance, Procurement, Safety, Legal, Operations, Other.
+Your task is to analyze the following document and return ONLY valid JSON (no explanations, no extra text).
+Make sure the JSON is strictly parseable.
 
-⚠️ Important: Return ONLY valid JSON, no explanations, no markdown fences.
+Rules:
+- Departments to choose from: Engineering, HR, Finance, Procurement, Safety, Legal, Operations, Other.
+- Identify which department(s) are relevant and include them in the "departments" key.
+- Always return ALL keys ("departments", "insights") exactly as in the JSON structure.
+- If some sections are not relevant, return them as empty arrays, empty objects, or short empty strings.
+- Do not include markdown, explanations, or formatting outside the JSON.
 
-Format:
+JSON Format:
 {
-  "departments": ["Engineering", "HR"],
-  "reasoning": "short explanation"
-}
+  "departments": [Relevant departments], 
 
-Document:
-${text}
-`
-    });
-
-    try {
-      let raw = classifyResponse.text.trim();
-      raw = raw.replace(/```json/i, "").replace(/```/g, "").trim();
-      const parsed = JSON.parse(raw);
-      departments = parsed.departments || ["General"];
-    } catch (err) {
-      console.error("Classification parse error:", err, "Raw:", classifyResponse.text);
-      departments = ["General"];
-    }
-
-    // Step 2: Structured insights (MODIFIED PROMPT)
-    const insightsPrompt = `
-Analyze the document and extract the following information.
-Return ONLY valid JSON.
-
-Format:
-{
-  "generalSummary": "A concise, one-paragraph summary of the entire document.",
-  "actionItems": ["List of clear, actionable tasks mentioned."],
-  "keyDates": [
-    { "date": "YYYY-MM-DD", "event": "A short description of the event or deadline." }
-  ],
-  "urgency": "Rate the urgency as Low, Medium, or High, with a one-sentence reason."
+  "insights": {
+    "generalSummary": "A detailed one-paragraph summary of the entire document.",
+    "actionItems": ["List of actionable tasks clearly extracted from the document."],
+    "keyDates": [
+      { "date": "YYYY-MM-DD", "event": "Short description of the deadline or milestone." }
+    ],
+    "urgency": "Low | Medium | High, with a short reason."
+  },
 }
 
 Document:
 ${text}
 `;
-    try {
-      const insightsResponse = await ai.models.generateContent({
-        model: "gemini-2.5-pro",
-        contents: insightsPrompt
-      });
-      let raw = insightsResponse.text.trim();
-      raw = raw.replace(/```json/i, "").replace(/```/g, "").trim();
-      insights = JSON.parse(raw);
-    } catch (err) {
-      console.error("Insights parse error:", err, "Raw:", insightsResponse.text);
-      insights = {
-        generalSummary: "Could not generate summary.",
-        actionItems: [],
-        keyDates: [],
-        urgency: "N/A"
-      };
-    }
 
-    // Step 3: Department-specific summaries
-    for (const dept of departments) {
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-pro",
+      contents: unifiedPrompt
+    });
+
+    let raw = response.text.trim();
+    raw = raw.replace(/```json/i, "").replace(/```/g, "").trim();
+
+    const parsed = JSON.parse(raw);
+    for (const dept of parsed.departments) {
       const deptResponse = await ai.models.generateContent({
         model: "gemini-2.5-pro",
         contents: `
-Summarize this document for the perspective of the ${dept} department.
-Only highlight points that are relevant for ${dept}.
-Keep it clear, concise, and actionable.
+          Summarize this document for the perspective of the ${dept} department.
+          Only highlight points that are relevant for ${dept}.
+          Keep it clear, concise, and actionable.
 
-Document:
-${text}
-`
+          Document:
+          ${text}`
       });
-      summaries[dept] = deptResponse.text.trim();
+      dept_summaries[dept] = deptResponse.text.trim().replace(/```json/i, "").replace(/```/g, "").trim();
     }
-  } catch (err) {
-    console.error("Gemini API error:", err);
-  }
 
-  return { departments, insights, summaries };
+return {
+  departments: parsed.departments || ["General"],
+  insights: parsed.insights || {
+    generalSummary: "Could not generate summary.",
+    actionItems: [],
+    keyDates: [],
+    urgency: "N/A"
+  },
+  summaries: dept_summaries || {}
+};
+  } catch (err) {
+  console.error("Summarization error:", err);
+  return {
+    departments: ["General"],
+    insights: {
+      generalSummary: "Could not generate summary.",
+      actionItems: [],
+      keyDates: [],
+      urgency: "N/A"
+    },
+    summaries: {}
+  };
+}
 }
 
 /* ---------------- ROUTES ---------------- */
@@ -190,10 +177,9 @@ app.post("/upload", async (req, res) => {
   try {
     const text = await extractTextFromFile(filePath, file.data);
     fs.unlinkSync(filePath);
-    
+
     const result = await summarizeText(text);
 
-    // MODIFIED: Assemble the final JSON object in the desired structure
     const finalResponse = {
       _id: crypto.randomUUID(),
       fileName: file.name,
@@ -209,11 +195,11 @@ app.post("/upload", async (req, res) => {
         departments: result.departments,
         summaries: result.summaries
       },
-      fullText: text, // Optionally include the full text
+      fullText: text,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
-    
+
     res.json(finalResponse);
     console.log("📊 Auto Summary Result:", JSON.stringify(finalResponse, null, 2));
 
@@ -226,8 +212,6 @@ app.post("/upload", async (req, res) => {
 app.post("/summarize", async (req, res) => {
   const { text } = req.body;
   if (!text) return res.status(400).send("No text provided");
-  // Note: This route still returns the raw AI result, not the fully structured object.
-  // It could be updated similarly to the /upload route if needed.
   const result = await summarizeText(text);
   res.json(result);
 });
@@ -240,7 +224,6 @@ app.get("/summaries", (req, res) => {
 let isProcessing = false;
 
 async function startMailListener() {
-    // --- SECURE: Using environment variables for credentials ---
   const config = {
     imap: {
       user: process.env.GMAIL_USER,
@@ -274,7 +257,7 @@ async function startMailListener() {
           const parts = imaps.getParts(msg.attributes.struct);
           for (const part of parts) {
             if (part.disposition && part.disposition.type.toUpperCase() === "ATTACHMENT") {
-              const filename = part.disposition.params.filename;
+              const filename = path.basename(part.disposition.params.filename); // safe filename
               console.log(`📩 Processing new attachment: ${filename}`);
 
               if (activeSocket) {
@@ -289,7 +272,6 @@ async function startMailListener() {
               console.log("⚡ Generating summary...");
               const result = await summarizeText(text);
 
-              // MODIFIED: Assemble the final JSON object for socket emission
               const finalResponse = {
                 _id: crypto.randomUUID(),
                 fileName: filename,
@@ -336,7 +318,6 @@ async function startMailListener() {
 startMailListener();
 
 /* ---------------- SERVER ---------------- */
-// --- PRODUCTION-READY: Use dynamic port ---
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () =>
   console.log(`✅ Server running on port ${PORT}`)

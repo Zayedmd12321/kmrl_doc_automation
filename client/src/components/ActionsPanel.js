@@ -31,8 +31,8 @@ function ActionsPanel({ result, fullText }) {
           <FiDownload className={styles['button-icon']} />
           <span>Download Full Text</span>
         </button>
-        {result?.summaries &&
-          Object.entries(result.summaries).map(([dept, summary]) => (
+        {result.analysis?.summaries &&
+          Object.entries(result.analysis.summaries).map(([dept, summary]) => (
             <button
               key={dept}
               className={`${styles['action-button']} ${styles.outline}`}
